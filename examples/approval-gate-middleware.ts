@@ -77,11 +77,14 @@ function createApprovalGate(config: ApprovalGateConfig) {
   function createTimeout(ms: number): Promise<ApprovalDecision> {
     return new Promise((resolve) => {
       setTimeout(() => {
+        const isEscalate = config.timeoutBehavior === "escalate";
         resolve({
           requestId: "timeout",
-          approved: config.timeoutBehavior === "deny" ? false : false,
-          approver: "system",
-          reason: `Approval timed out after ${ms}ms`,
+          approved: false,
+          approver: isEscalate ? "escalation-required" : "system",
+          reason: isEscalate 
+            ? `Approval timed out after ${ms}ms - escalation required`
+            : `Approval timed out after ${ms}ms - denied by timeout policy`,
           timestamp: new Date()
         });
       }, ms);
