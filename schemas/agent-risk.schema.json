@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-risk.schema.json",
+  "title": "Agent Risk Classification",
+  "description": "Schema for classifying agent risk profiles and required controls",
+  "type": "object",
+  "required": ["agentId", "agentType", "dataAccessLevel", "actionScope", "autonomyLevel", "requiredControls"],
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "description": "Unique identifier for the agent"
+    },
+    "agentType": {
+      "type": "string",
+      "enum": ["assistant", "processor", "orchestrator", "autonomous"],
+      "description": "Classification of agent behavior pattern"
+    },
+    "dataAccessLevel": {
+      "type": "string",
+      "enum": ["none", "read-public", "read-internal", "read-sensitive", "read-write-internal", "read-write-sensitive"],
+      "description": "Level of data access granted to the agent"
+    },
+    "actionScope": {
+      "type": "object",
+      "required": ["canModifyData", "canCallExternalAPIs", "canSpawnAgents", "canAccessFilesystem"],
+      "properties": {
+        "canModifyData": {
+          "type": "boolean",
+          "description": "Whether the agent can modify persistent data"
+        },
+        "canCallExternalAPIs": {
+          "type": "boolean",
+          "description": "Whether the agent can make external API calls"
+        },
+        "canSpawnAgents": {
+          "type": "boolean",
+          "description": "Whether the agent can create or invoke other agents"
+        },
+        "canAccessFilesystem": {
+          "type": "boolean",
+          "description": "Whether the agent can read or write to the filesystem"
+        },
+        "additionalScopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Additional capability scopes specific to the deployment"
+        }
+      }
+    },
+    "autonomyLevel": {
+      "type": "string",
+      "enum": ["supervised", "semi-autonomous", "autonomous", "fully-autonomous"],
+      "description": "Degree of autonomous operation permitted"
+    },
+    "requiredControls": {
+      "type": "object",
+      "required": ["approvalGates", "logging", "rateLimits"],
+      "properties": {
+        "approvalGates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action", "approvalType"],
+            "properties": {
+              "action": {
+                "type": "string",
+                "description": "Action requiring approval"
+              },
+              "approvalType": {
+                "type": "string",
+                "enum": ["human", "automated-policy", "tiered"],
+                "description": "Type of approval required"
+              }
+            }
+          },
+          "description": "Actions requiring explicit approval"
+        },
+        "logging": {
+          "type": "object",
+          "required": ["level", "retentionDays"],
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["minimal", "standard", "verbose", "debug"],
+              "description": "Logging verbosity level"
+            },
+            "retentionDays": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Number of days to retain logs"
+            },
+            "immutable": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether logs should be append-only"
+            }
+          }
+        },
+        "rateLimits": {
+          "type": "object",
+          "properties": {
+            "actionsPerMinute": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum actions per minute"
+            },
+            "actionsPerSession": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum actions per session"
+            },
+            "dataVolumePerAction": {
+              "type": "string",
+              "description": "Maximum data volume per single action"
+            }
+          }
+        },
+        "humanInLoop": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether human checkpoints are required"
+        },
+        "blastRadiusLimits": {
+          "type": "object",
+          "properties": {
+            "maxAffectedRecords": {
+              "type": "integer",
+              "description": "Maximum records that can be affected in one action"
+            },
+            "maxCascadeDepth": {
+              "type": "integer",
+              "description": "Maximum depth of chained agent calls"
+            },
+            "sandboxRequired": {
+              "type": "boolean",
+              "description": "Whether actions must execute in a sandbox first"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "description": "Team or individual responsible for this agent"
+        },
+        "lastReviewDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of last security review"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of this risk classification"
+        }
+      }
+    }
+  }
+}

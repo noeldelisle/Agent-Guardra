@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tool-policy.schema.json",
+  "title": "Tool Policy",
+  "description": "Schema for defining tool access policies and constraints",
+  "type": "object",
+  "required": ["toolName", "allowedActions", "approvalRequirements", "loggingRequirements"],
+  "properties": {
+    "toolName": {
+      "type": "string",
+      "description": "Unique identifier for the tool"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of tool purpose"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["read", "write", "execute", "network", "filesystem", "database", "external-api", "agent-control"],
+      "description": "Classification of tool type"
+    },
+    "allowedActions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["action", "permitted"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Specific action within the tool"
+          },
+          "permitted": {
+            "type": "boolean",
+            "description": "Whether the action is allowed"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Conditions under which the action is permitted"
+          },
+          "parameterConstraints": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "allowedValues": {
+                  "type": "array",
+                  "description": "Explicit list of allowed values"
+                },
+                "pattern": {
+                  "type": "string",
+                  "description": "Regex pattern for allowed values"
+                },
+                "maxLength": {
+                  "type": "integer",
+                  "description": "Maximum length for string parameters"
+                },
+                "maxValue": {
+                  "type": "number",
+                  "description": "Maximum value for numeric parameters"
+                }
+              }
+            },
+            "description": "Constraints on action parameters"
+          }
+        }
+      },
+      "description": "List of actions and their permission status"
+    },
+    "approvalRequirements": {
+      "type": "object",
+      "required": ["requiresApproval"],
+      "properties": {
+        "requiresApproval": {
+          "type": "boolean",
+          "description": "Whether any use of this tool requires approval"
+        },
+        "approvalType": {
+          "type": "string",
+          "enum": ["none", "human-sync", "human-async", "automated-policy", "tiered"],
+          "description": "Type of approval required"
+        },
+        "approvers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of authorized approvers"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Timeout for approval requests"
+        },
+        "timeoutBehavior": {
+          "type": "string",
+          "enum": ["deny", "escalate", "auto-approve"],
+          "description": "Behavior when approval times out"
+        },
+        "bypassConditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Conditions under which approval can be bypassed"
+        }
+      }
+    },
+    "loggingRequirements": {
+      "type": "object",
+      "required": ["logLevel"],
+      "properties": {
+        "logLevel": {
+          "type": "string",
+          "enum": ["none", "invocation-only", "parameters", "full-context", "debug"],
+          "description": "Level of detail to log"
+        },
+        "sensitiveFields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fields that should be redacted in logs"
+        },
+        "retentionOverride": {
+          "type": "integer",
+          "description": "Override default retention period (days)"
+        },
+        "alertOnFailure": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to alert on tool invocation failure"
+        },
+        "alertOnSuccess": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to alert on tool invocation success"
+        }
+      }
+    },
+    "rateLimits": {
+      "type": "object",
+      "properties": {
+        "perMinute": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum invocations per minute"
+        },
+        "perHour": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum invocations per hour"
+        },
+        "perSession": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum invocations per agent session"
+        },
+        "cooldownSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum seconds between invocations"
+        }
+      }
+    },
+    "environments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["development", "staging", "production", "sandbox"]
+      },
+      "description": "Environments where this tool is permitted"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "description": "Team responsible for this policy"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of last policy update"
+        },
+        "version": {
+          "type": "string",
+          "description": "Policy version"
+        }
+      }
+    }
+  }
+}
